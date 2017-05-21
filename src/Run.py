@@ -15,9 +15,9 @@ def main():
     myPerceptronClassifier = Perceptron(data.trainingSet,
                                         data.validationSet,
                                         data.testSet,
-                                        learningRate=0.005,
-                                        epochs=30)
-    
+                                        learningRate=0.05,
+                                        epochs=50)
+
     # Train the classifiers
     print("=========================")
     print("Training..")
@@ -34,7 +34,7 @@ def main():
     # Explicitly specify the test set to be evaluated
     stupidPred = myStupidClassifier.evaluate()
     perceptronPred = myPerceptronClassifier.evaluate()
-    
+
     # Report the result
     print("=========================")
     evaluator = Evaluator()
@@ -46,7 +46,7 @@ def main():
     print("\nResult of the Perceptron recognizer:")
     # evaluator.printComparison(data.testSet, perceptronPred)
     evaluator.printAccuracy(data.testSet, perceptronPred)
-    
+
 
 if __name__ == '__main__':
     main()
