@@ -4,10 +4,10 @@ import sys
 import logging
 
 import numpy as np
-
+from sklearn.metrics import accuracy_score
 from util.activation_functions import Activation
 from model.classifier import Classifier
-
+from model.logistic_layer import LogisticLayer
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG,
                     stream=sys.stdout)
@@ -43,9 +43,8 @@ class LogisticRegression(Classifier):
         self.trainingSet = train
         self.validationSet = valid
         self.testSet = test
-
+        self.layer = LogisticLayer(self.trainingSet.input.shape[1], 1, learningRate=learningRate)
         # Initialize the weight vector with small values
-        self.weight = 0.01*np.random.randn(self.trainingSet.input.shape[1])
 
     def train(self, verbose=True):
         """Train the Logistic Regression.
@@ -55,10 +54,20 @@ class LogisticRegression(Classifier):
         verbose : boolean
             Print logging messages with validation accuracy if verbose is True.
         """
+        for i in xrange(self.epochs):
+            if verbose:
+                pred = self.evaluate(
+                    test=self.validationSet.input)
+                print("Epoch: {0}, Accuracy on validation data: {1:.2f}".format(
+                        i, accuracy_score(self.validationSet.label, pred)*100))
+            self.step_once()
+    def step_once(self):
+        for da, la in zip(self.trainingSet.input, self.trainingSet.label):
+            self.layer.forward(da)
+            self.layer.computeDerivative(np.asarray(la - self.layer.output), np.array(1.0))
+            self.layer.updateWeights()
 
-        pass
-        
-    def classify(self, testInstance):
+    def classify(self, testInstance, threshold=0.5):
         """Classify a single instance.
 
         Parameters
@@ -70,7 +79,8 @@ class LogisticRegression(Classifier):
         bool :
             True if the testInstance is recognized as a 7, False otherwise.
         """
-        pass
+        o = self.layer.forward(testInstance)
+        return o > threshold
 
     def evaluate(self, test=None):
         """Evaluate a whole dataset.
@@ -90,11 +100,3 @@ class LogisticRegression(Classifier):
         # Once you can classify an instance, just use map for all of the test
         # set.
         return list(map(self.classify, test))
-
-    def updateWeights(self, grad):
-        pass
-
-    def fire(self, input):
-        # Look at how we change the activation function here!!!!
-        # Not Activation.sign as in the perceptron, but sigmoid
-        return Activation.sigmoid(np.dot(np.array(input), self.weight))
