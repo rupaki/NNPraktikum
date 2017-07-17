@@ -2,12 +2,10 @@
 
 import sys
 import logging
-
 import numpy as np
-
 from util.activation_functions import Activation
 from model.classifier import Classifier
-
+from model.logistic_layer import LogisticLayer
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG,
                     stream=sys.stdout)
@@ -43,9 +41,9 @@ class LogisticRegression(Classifier):
         self.trainingSet = train
         self.validationSet = valid
         self.testSet = test
-
         # Initialize the weight vector with small values
-        self.weight = 0.01*np.random.randn(self.trainingSet.input.shape[1])
+        #self.weight = 0.01*np.random.randn(self.trainingSet.input.shape[1])
+        self.layer = LogisticLayer(self.trainingSet.input.shape[1], 1, learningRate=learningRate)
 
     def train(self, verbose=True):
         """Train the Logistic Regression.
@@ -56,8 +54,9 @@ class LogisticRegression(Classifier):
             Print logging messages with validation accuracy if verbose is True.
         """
 
-        from util.loss_functions import DifferentError
-        loss = DifferentError()
+        from util.loss_functions import BinaryCrossEntropyError, DifferentError
+        cog_loss = DifferentError()
+        loss = BinaryCrossEntropyError()
 
         learned = False
         iteration = 0
@@ -67,23 +66,26 @@ class LogisticRegression(Classifier):
             totalError = 0
             for input, label in zip(self.trainingSet.input,
                                     self.trainingSet.label):
-                output = self.fire(input)
-                # compute gradient
-                grad += -(label - output)*input
 
+                output = self.layer.forward(input)
+                # compute gradient
+                loss_grad = loss.calculateDerivative(label, output)
+
+                self.layer.computeDerivative(loss_grad, np.array(1.0))
+                self.layer.updateWeights()
                 # compute recognizing error, not BCE
                 predictedLabel = self.classify(input)
-                error = loss.calculateError(label, predictedLabel)
+                error = cog_loss.calculateError(label, predictedLabel)
                 totalError += error
 
-            self.updateWeights(grad)
+            #self.updateWeights(grad)
             totalError = abs(totalError)
-            
+
             iteration += 1
 
             if verbose:
                 logging.info("Epoch: %i; Error: %i", iteration, totalError)
-                
+
 
             if totalError == 0 or iteration >= self.epochs:
                 # stop criteria is reached
@@ -101,7 +103,7 @@ class LogisticRegression(Classifier):
         bool :
             True if the testInstance is recognized as a 7, False otherwise.
         """
-        return self.fire(testInstance) > 0.5
+        return self.layer.forward(testInstance) > 0.5
 
     def evaluate(self, test=None):
         """Evaluate a whole dataset.
@@ -120,6 +122,7 @@ class LogisticRegression(Classifier):
             test = self.testSet.input
         # Once you can classify an instance, just use map for all of the test
         # set.
+        #import pdb; pdb.set_trace()
         return list(map(self.classify, test))
 
     def updateWeights(self, grad):

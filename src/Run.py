@@ -19,12 +19,11 @@ def main():
                                         data.testSet,
                                         learningRate=0.005,
                                         epochs=30)
-
     myLRClassifier = LogisticRegression(data.trainingSet,
                                         data.validationSet,
                                         data.testSet,
                                         learningRate=0.005,
-                                        epochs=30)
+                                        epochs=50)
 
     # Train the classifiers
     print("=========================")

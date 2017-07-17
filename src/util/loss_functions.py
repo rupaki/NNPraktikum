@@ -85,7 +85,19 @@ class BinaryCrossEntropyError(Error):
         self.errorString = 'bce'
 
     def calculateError(self, target, output):
-        pass
+        return -np.sum(target * np.log(output) + (1.0 - target) * np.log(1.0 - output))
+
+    def calculateDerivative(self, target, output):
+        epsilon = 1e-30
+        to_divide = output * (1.0 - output)
+        #print output
+        #print to_divide
+        if isinstance(to_divide, np.ndarray):
+            to_divide[to_divide < epsilon] = epsilon
+        else:
+            if to_divide < epsilon:
+                to_divide = epsilon
+        return np.divide(target - output, to_divide)
 
 
 class CrossEntropyError(Error):

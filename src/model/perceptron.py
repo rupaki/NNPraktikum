@@ -46,11 +46,12 @@ class Perceptron(Classifier):
 
         # Initialize the weight vector with small random values
         # around 0 and0.1
-        self.trainingSet.input = self._augment_data(self.trainingSet.input)
-        self.weight = np.random.rand(self.trainingSet.input.shape[1])/100
+        self.input = self._augment_data(self.trainingSet.input)
+        self.label = self.trainingSet.label
+        self.weight = np.random.rand(self.input.shape[1])/100
         #self.weight[0] = 0.0
-        print self.trainingSet.input.shape
-        #print self.trainingSet.label[0]
+        print self.input.shape
+        #print self.label[0]
     def _augment_data(self, data):
         """ augmentation of first dimension of data as 1
         for bias computation
@@ -76,8 +77,8 @@ class Perceptron(Classifier):
         # Train for some epochs if the error is not 0
         while not learned:
             totalError = 0
-            for input, label in zip(self.trainingSet.input,
-                                    self.trainingSet.label):
+            for input, label in zip(self.input,
+                                    self.label):
                 output = self.fire(input)
                 if output != label:
                     error = loss.calculateError(label, output)
