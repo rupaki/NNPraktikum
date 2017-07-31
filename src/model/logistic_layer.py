@@ -1,13 +1,15 @@
+
 import time
 
 import numpy as np
 
 from util.activation_functions import Activation
+#from model.layer import Layer
 
 
 class LogisticLayer():
     """
-    A layer of neural
+    A layer of perceptrons acting as the output layer
 
     Parameters
     ----------
@@ -30,7 +32,7 @@ class LogisticLayer():
         the name of the activation function
     isClassifierLayer: bool
         to do classification or regression
-    deltas : ndarray
+    delta : ndarray
         partial derivatives
     size : positive int
         number of units in the current layer
@@ -39,9 +41,10 @@ class LogisticLayer():
     """
 
     def __init__(self, nIn, nOut, learningRate=0.01, weights=None,
-                 activation='sigmoid', isClassifierLayer=True):
+                 activation='sigmoid'):
 
         # Get activation function from string
+        # Notice the functional programming paradigms of Python + Numpy
         self.activationString = activation
         self.activation = Activation.getActivation(self.activationString)
         self.activation_derivative = Activation.getDerivative(
@@ -50,20 +53,19 @@ class LogisticLayer():
         self.nIn = nIn
         self.nOut = nOut
 
-        self.inp = np.ndarray((nIn+1, 1))
-        self.inp[0] = 1
-        self.outp = np.ndarray((nOut, 1))
-        self.deltas = np.zeros((nOut, 1))
+        # Adding bias
+        self.input = np.ndarray((nIn+1, 1))
+        self.input[0] = 1
+        self.output = np.ndarray((nOut, 1))
+        self.delta = np.zeros((nOut, 1))
 
         # You can have better initialization here
         if weights is None:
             rns = np.random.RandomState(int(time.time()))
             self.weights = rns.uniform(size=(nIn + 1, nOut))-0.5
         else:
-            assert(weights.shape == (nIn + 1, nOut))
             self.weights = weights
 
-        self.isClassifierLayer = isClassifierLayer
 
         # Some handy properties of the layers
         self.size = self.nOut
@@ -94,8 +96,8 @@ class LogisticLayer():
             a numpy array (1,nIn) containing the input of the layer
         Returns
         -------
-        outp: ndarray
-            a numpy array (nOut,1) containing the output of the layer
+        ndarray :
+            a numpy array (1,nOut) containing the output of the layer
         """
         self.input = self._augment_data(input)
         self.output = self.activation(self._fire(self.input, self.weights))
@@ -104,29 +106,28 @@ class LogisticLayer():
     def _fire(self, input, weights):
         return np.dot(np.array(input), weights)
 
-
-
-    def computeDerivative(self, next_derivatives, next_weights):
+    def computeDerivative(self, nextDerivatives, nextWeights):
         """
-        Compute the derivatives (backward)
+        Compute the derivatives (back)
 
         Parameters
         ----------
-        next_derivatives: ndarray
+        nextDerivatives: ndarray
             a numpy array containing the derivatives from next layer
-        next_weights : ndarray
+        nextWeights : ndarray
             a numpy array containing the weights from next layer
 
-        Change deltas
+        Returns
         -------
-        deltas: ndarray
+        ndarray :
             a numpy array containing the partial derivatives on this layer
         """
-
-        self.delta = self.activation_derivative(self.output) * np.dot(nextDerivatives * nextWeights)
+        #from IPython import embed; embed()
+        self.delta = self.activation_derivative(self.output) * np.dot(nextDerivatives, nextWeights)
     def updateWeights(self):
         """
         Update the weights of the layer
         """
+        #print self.delta
         for i in range(self.nOut):
             self.weights[:, i] += self.learningRate*self.delta[i]*self.input

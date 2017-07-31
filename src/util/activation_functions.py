@@ -3,7 +3,7 @@
 """
 Activation functions which can be used within neurons.
 """
-
+from __future__ import division
 from numpy import exp
 from numpy import divide
 from numpy import ones
@@ -64,19 +64,19 @@ class Activation:
     @staticmethod
     def softmax(netOutput):
         # Here you have to code the softmax function
-        pass
+        out_exp = exp(netOutput)
+        return divide(out_exp, out_exp.sum())
 
     @staticmethod
     def softmaxPrime(netOutput):
         # Here you have to code the softmax function
-        pass
+        return netOutput*(1.0 - netOutput)
 
     @staticmethod
     def getActivation(str):
         """
         Returns the activation function corresponding to the given string
         """
-
         if str == 'sigmoid':
             return Activation.sigmoid
         elif str == 'softmax':

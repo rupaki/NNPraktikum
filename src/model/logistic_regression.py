@@ -3,14 +3,10 @@
 import sys
 import logging
 import numpy as np
-from sklearn.metrics import accuracy_score
 from util.activation_functions import Activation
-# from util.activation_functions import Activation
 from model.classifier import Classifier
 from model.logistic_layer import LogisticLayer
-
-from util.loss_functions import *
-
+from sklearn.metrics import accuracy_score
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG,
                     stream=sys.stdout)
@@ -33,14 +29,12 @@ class LogisticRegression(Classifier):
     trainingSet : list
     validationSet : list
     testSet : list
+    weight : list
     learningRate : float
     epochs : positive int
-    performances: array of floats
     """
 
-    def __init__(self, train, valid, test,
-                 learningRate=0.01, epochs=50,
-                 loss='bce'):
+    def __init__(self, train, valid, test, learningRate=0.01, epochs=50):
 
         self.learningRate = learningRate
         self.epochs = epochs
@@ -61,26 +55,12 @@ class LogisticRegression(Classifier):
             Print logging messages with validation accuracy if verbose is True.
         """
 
-        from util.loss_functions import BinaryCrossEntropyError, DifferentError
+        from util.loss_functions import CrossEntropyError, DifferentError
         cog_loss = DifferentError()
-        loss = BinaryCrossEntropyError()
-
-            self._train_one_epoch()
-
-            if verbose:
-                accuracy = accuracy_score(self.validationSet.label,
-                                          self.evaluate(self.validationSet))
-                # Record the performance of each epoch for later usages
-                # e.g. plotting, reporting..
-                self.performances.append(accuracy)
-                print("Accuracy on validation: {0:.2f}%"
-                      .format(accuracy * 100))
-                print("-----------------------------")
-
-    def _train_one_epoch(self):
-        """
-        Train one epoch, seeing all input instances
-        """
+        loss = CrossEntropyError()
+        self.performances = []
+        learned = False
+        iteration = 0
 
         while not learned:
             grad = 0
@@ -106,17 +86,25 @@ class LogisticRegression(Classifier):
 
             if verbose:
                 logging.info("Epoch: %i; Error: %i", iteration, totalError)
+                accuracy = accuracy_score(self.validationSet.label,
+                          self.evaluate(self.validationSet))
+                # Record the performance of each epoch for later usages
+                # e.g. plotting, reporting..
+                self.performances.append(accuracy)
+                print("Accuracy on validation: {0:.2f}%"
+                      .format(accuracy * 100))
+                print("-----------------------------")
 
+            if totalError == 0 or iteration >= self.epochs:
+                # stop criteria is reached
+                learned = True
 
-            # Update weights in the online learning fashion
-            self.layer.updateWeights(self.learningRate)
-
-    def classify(self, test_instance):
+    def classify(self, testInstance):
         """Classify a single instance.
 
         Parameters
         ----------
-        test_instance : list of floats
+        testInstance : list of floats
 
         Returns
         -------
@@ -145,9 +133,8 @@ class LogisticRegression(Classifier):
         #import pdb; pdb.set_trace()
         return list(map(self.classify, test))
 
-    def __del__(self):
-        # Remove the bias from input data
-        self.trainingSet.input = np.delete(self.trainingSet.input, 0, axis=1)
-        self.validationSet.input = np.delete(self.validationSet.input, 0,
-                                              axis=1)
-        self.testSet.input = np.delete(self.testSet.input, 0, axis=1)
+    def updateWeights(self, grad):
+        self.weight -= self.learningRate*grad
+
+    def fire(self, input):
+        return Activation.sigmoid(np.dot(np.array(input), self.weight))

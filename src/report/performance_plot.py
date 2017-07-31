@@ -13,11 +13,11 @@ class PerformancePlot(object):
         '''
         self.name = name
 
-    def draw_performance_epoch(self, performances, epochs):
-        plt.plot(range(epochs), performances, 'k',
+    def draw_performance_epoch(self, ax, performances, epochs):
+        ax.plot(range(epochs), performances, 'k',
                  range(epochs), performances, 'ro')
-        plt.title("Performance of " + self.name + " over the epochs")
-        plt.ylim(ymax=1)
-        plt.ylabel("Accuracy")
-        plt.xlabel("Epoch")
-        plt.show()
+        ax.set_title(self.name)
+        ax.set_ylim(ymax=1)
+        ax.set_ylabel("Accuracy")
+        ax.set_xlabel("Epoch")
+        #plt.show()
